@@ -718,8 +718,8 @@ util_net.reload_model(model_fea, torch.load('preset/models/dino/dinov2_vits14_pr
 model_fea.requires_grad_(False)
 
 # load lpips model
-# import lpips
-# net_lpips = lpips.LPIPS(net='vgg').cuda()
+import lpips
+net_lpips = lpips.LPIPS(net='vgg').cuda()
 
 # `accelerate` 0.16.0 will have better support for customized saving
 if version.parse(accelerate.__version__) >= version.parse("0.16.0"):
@@ -1124,9 +1124,9 @@ for epoch in range(first_epoch, args.num_train_epochs):
             gan_loss = -torch.mean(pred_fake)
 
             loss_x0 = F.mse_loss(image.float(), pixel_values.float(), reduction="mean") * lambda_l2
-            # if lambda_lpips != 0:
-                # loss_lpips = net_lpips(image.float(), pixel_values.float()).mean() * lambda_lpips
-                # loss_x0 = loss_lpips + loss_x0
+            if lambda_lpips != 0:
+                loss_lpips = net_lpips(image.float(), pixel_values.float()).mean() * lambda_lpips
+                loss_x0 = loss_lpips + loss_x0
 
             loss = loss_x0 + lambda_disc * gan_loss
 
