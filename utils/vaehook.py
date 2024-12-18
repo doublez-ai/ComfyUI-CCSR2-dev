@@ -283,53 +283,47 @@ def build_sampling(task_queue, net, is_decoder):
     @param is_decoder: currently building decoder or encoder
     """
     if is_decoder:
-        if sd_flag:
-            resblock2task(task_queue, net.mid.block_1)
-            attn2task(task_queue, net.mid.attn_1)
-            print(task_queue)
-            resblock2task(task_queue, net.mid.block_2)
-            resolution_iter = reversed(range(net.num_resolutions))
-            block_ids = net.num_res_blocks + 1
-            condition = 0
-            module = net.up
-            func_name = 'upsample'
-        else:
-            resblock2task(task_queue, net.mid_block.resnets[0])
-            attn2task(task_queue, net.mid_block.attentions[0])
-            resblock2task(task_queue, net.mid_block.resnets[1])
-            resolution_iter = (range(len(net.up_blocks)))  # net.num_resolutions = 3
-            block_ids = 2 + 1
-            condition = len(net.up_blocks) - 1
-            module = net.up_blocks
-            func_name = 'upsamplers'
+        # resblock2task(task_queue, net.mid.block_1)
+        # attn2task(task_queue, net.mid.attn_1)
+        # resblock2task(task_queue, net.mid.block_2)
+        # resolution_iter = reversed(range(net.num_resolutions))
+        # block_ids = net.num_res_blocks + 1
+        # condition = 0
+        # module = net.up
+        # func_name = 'upsample'
+        resblock2task(task_queue, net.mid_block.resnets[0])
+        attn2task(task_queue, net.mid_block.attentions[0])
+        resblock2task(task_queue, net.mid_block.resnets[1])
+        resolution_iter = (range(len(net.up_blocks)))  # range(0,4)
+        block_ids = 2 + 1
+        condition = len(net.up_blocks) - 1
+        module = net.up_blocks
+        func_name = 'upsamplers'
     else:
-        resolution_iter = range(net.num_resolutions)
-        block_ids = net.num_res_blocks
-        condition = net.num_resolutions - 1
-        module = net.down
-        func_name = 'downsample'
+        # resolution_iter = range(net.num_resolutions)
+        # block_ids = net.num_res_blocks
+        # condition = net.num_resolutions - 1
+        # module = net.down
+        # func_name = 'downsample'
+        resolution_iter = (range(len(net.down_blocks)))  # range(0,4)
+        block_ids = 2
+        condition = len(net.down_blocks) - 1
+        module = net.down_blocks
+        func_name = 'downsamplers'
 
     for i_level in resolution_iter:
         for i_block in range(block_ids):
-            if sd_flag:
-                resblock2task(task_queue, module[i_level].block[i_block])
-            else:
-                resblock2task(task_queue, module[i_level].resnets[i_block])
+            resblock2task(task_queue, module[i_level].resnets[i_block])
         if i_level != condition:
-            if sd_flag:
-                task_queue.append((func_name, getattr(module[i_level], func_name)))
-            else:
+            if is_decoder:
                 task_queue.append((func_name, module[i_level].upsamplers[0]))
+            else:
+                task_queue.append((func_name, module[i_level].downsamplers[0]))
 
     if not is_decoder:
-        if sd_flag:
-            resblock2task(task_queue, net.mid.block_1)
-            attn2task(task_queue, net.mid.attn_1)
-            resblock2task(task_queue, net.mid.block_2)
-        else:
-            resblock2task(task_queue, net.mid_block.resnets[0])
-            attn2task(task_queue, net.mid_block.attentions[0])
-            resblock2task(task_queue, net.mid_block.resnets[1])
+        resblock2task(task_queue, net.mid_block.resnets[0])
+        attn2task(task_queue, net.mid_block.attentions[0])
+        resblock2task(task_queue, net.mid_block.resnets[1])
 
 
 def build_task_queue(net, is_decoder):
@@ -556,9 +550,15 @@ class VAEHook:
                 self.net.to(devices.get_optimal_device())
             if max(H, W) <= self.pad * 2 + self.tile_size:
                 print("[Tiled VAE]: the input size is tiny and unnecessary to tile.")
-                return self.net.original_forward(x)
+                x_type = x.dtype
+                x = self.net.original_forward(x)
+                x = x.to(dtype=x_type)
+                return x
             else:
-                return self.vae_tile_forward(x)
+                x_type = x.dtype
+                x = self.vae_tile_forward(x)
+                x = x.to(dtype=x_type)
+                return x
         finally:
             self.net.to(original_device)
 
