@@ -29,7 +29,7 @@ from diffusers.image_processor import VaeImageProcessor
 from diffusers.loaders import TextualInversionLoaderMixin
 # from diffusers.models import AutoencoderKL, ControlNetModel, UNet2DConditionModel
 from diffusers.models import AutoencoderKL, UNet2DConditionModel
-from models.controlnet import ControlNetModel
+from ..models.controlnet import ControlNetModel
 from diffusers.schedulers import KarrasDiffusionSchedulers
 from diffusers.utils import (
     PIL_INTERPOLATION,
@@ -45,7 +45,7 @@ from diffusers.pipelines.stable_diffusion import StableDiffusionPipelineOutput
 from diffusers.pipelines.stable_diffusion.safety_checker import StableDiffusionSafetyChecker
 from diffusers.pipelines.controlnet.multicontrolnet import MultiControlNetModel
 
-from utils.vaehook import VAEHook, perfcount
+from ..utils.vaehook import VAEHook, perfcount
 from tqdm import tqdm
 from torch import FloatTensor
 from PIL import Image

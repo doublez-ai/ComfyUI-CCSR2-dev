@@ -67,7 +67,7 @@ import torch.version
 import torch.nn.functional as F
 from einops import rearrange
 import sys
-import myutils.devices as devices
+from ..myutils import devices as devices
 #from modules.shared import state
 #from ldm.modules.diffusionmodules.model import AttnBlock, MemoryEfficientAttnBlock
 
